@@ -1,15 +1,15 @@
 # Sitemap-Generator
 
-Automatically generate Sitemap.xml for your site.
+Automatically generate sitemap.xml for your site.
 
 ## Requirements
-Download https://jsoup.org/download
-Unzipped
+- https://jsoup.org/download
+
+## Todo
+Replace all necessary data such as file locations and domain name.
 
 ## Compile
 javac Sitemap.java
 
 ## Run
 java Sitemap
-
-Replace all info in .github/workflows/sitemap.yml with your repository info.
