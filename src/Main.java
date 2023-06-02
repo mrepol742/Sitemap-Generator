@@ -12,7 +12,7 @@ import org.jsoup.internal.*;
 import org.jsoup.nodes.*;
 import org.jsoup.parser.*;
 
-class Sitemap {
+class Main {
 
     private static List<Link> links = new ArrayList<>();
     private static SimpleDateFormat format =  new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX");
