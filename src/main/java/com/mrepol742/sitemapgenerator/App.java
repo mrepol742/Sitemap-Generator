@@ -40,7 +40,7 @@ public class App {
 
         sitemap.append(header);
         for (Link link: links) {
-            sitemap.append(String.format("<url>\n<loc>%1$s</loc>\n<lastmod>%2$s</lastmod>\n", link.url, link.date));
+            sitemap.append(String.format("<url>\n<loc>%1$s</loc>\n<lastmod>%2$s</lastmod>\n", (link.url).replace("//", "/"), link.date));
             sitemap.append(link.more);
             sitemap.append("</url>\n");
         }
