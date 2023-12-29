@@ -27,8 +27,10 @@ public class App {
     static StringBuilder sitemap = new StringBuilder();
     static Arg arg;
     static boolean isHome = false;
+    static long timeStarted = 0;
 
     public static void main(String[] args) throws IOException {
+        timeStarted = System.currentTimeMillis();
         if (args.length == 0) {
             System.out.println("arguments:\n\t--domain [address]\n\t--publisher [name]\noptional:\n\t--projectFolder [location]");
             return;
@@ -36,21 +38,34 @@ public class App {
 
         arg = resolveArguments(args); 
 
+        System.out.println("\n\nScanning for files...");
+        System.out.println("----------< " + arg.getDomain() + " >----------\nBuilding /Sitemap/index.xml\n");
+
         find(new File(arg.getProjectFolder()), arg.getDomain());
 
         sitemap.append(header);
         for (Link link: links) {
-            sitemap.append(String.format("<url>\n<loc>%1$s</loc>\n<lastmod>%2$s</lastmod>\n", (link.url).replace("//", "/"), link.date));
+            sitemap.append(String.format("<url>\n\t<loc>%1$s</loc>\n\t<lastmod>%2$s</lastmod>\t", link.url, link.date));
             sitemap.append(link.more);
             sitemap.append("</url>\n");
         }
         sitemap.append(footer);
-          Files.createDirectories(Paths.get(arg.getProjectFolder() + "/sitemap"));
+        Files.createDirectories(Paths.get(arg.getProjectFolder() + "/sitemap"));
+        StringBuilder sb = new StringBuilder("\n------------------------------------------------------------------------");
         if (write(new File(arg.getProjectFolder() + "/sitemap/index.xml"), sitemap.toString(), false)) {
-            System.out.println("\nSitemap generated for " + arg.getDomain());
+            sb.append("\nBuild Success");
         } else {
-            System.out.println("\nFailed to generate sitemap.");
+            sb.append("\nBuild Failed");
         }
+        sb.append("\n------------------------------------------------------------------------");
+        long sum = System.currentTimeMillis() - timeStarted;
+        sb.append("\nTotal time: ");
+        sb.append(String.valueOf(sum));
+        sb.append(" s");
+        sb.append("\nFinished at: ");
+        sb.append(format.format(System.currentTimeMillis()));
+        sb.append("\n------------------------------------------------------------------------");
+        System.out.println(sb.toString());
     }
 
     public static String getImages(File file) {
@@ -60,7 +75,9 @@ public class App {
         for (Element el : image) {
             String src = el.attr("src");
             if (src.startsWith("/images/")) {
-                images.append("  <image:image>\n    <image:loc>" + arg.getDomain() + src.replaceAll("/images","images") + "</image:loc>\n  </image:image>");
+                String location = arg.getDomain() + src.replaceAll("/images","images");
+                System.out.println("\timage >> " + location);
+                images.append("\n\t<image:image>\n\t\t<image:loc>" + location + "</image:loc>\n\t</image:image>");
             }
         }
         return images.toString();
@@ -73,7 +90,9 @@ public class App {
         for (Element el : image) {
             String src = el.attr("src");
             if (src.startsWith("/videos/")) {
-                videos.append("  <video:video>\n    <video:title>" + (src.replaceAll("%20", " ").replaceAll("/videos/","").replaceAll(".mp4", ""))+ "</video:title>\n    <video:content_loc>" + arg.getDomain() + src.replace("/videos","videos") + "</video:content_loc>\n  </video:video>");
+                String location = arg.getDomain() + src.replace("/videos","videos");
+                System.out.println("\tvideo >> " + location);
+                videos.append("\t<video:video>\n\t\t<video:title>" + (src.replaceAll("%20", " ").replaceAll("/videos/","").replaceAll(".mp4", ""))+ "</video:title>\n\t\t<video:content_loc>" + location + "</video:content_loc>\n\t</video:video>\n");
             }
         }
         return videos.toString();
@@ -96,8 +115,11 @@ public class App {
             if (folder.isDirectory()) {
                 File hasIndex = new File(folder.getAbsolutePath() + "/index.html");
                 if (hasIndex.isFile()) {
-                     System.out.println(format.format(hasIndex.lastModified()) + " | " + arg.getDomain() + hasIndex.getParentFile().getAbsolutePath().replace(arg.getProjectFolder(), ""));
-                    links.add(new Link(arg.getDomain() + hasIndex.getParentFile().getAbsolutePath().replace(arg.getProjectFolder(), "") , format.format(hasIndex.lastModified()), getImages(hasIndex) + "\n" + getVideos(hasIndex)));
+                    String location = arg.getDomain() + hasIndex.getParentFile().getAbsolutePath().replace(arg.getProjectFolder() + "/", "");
+                    String lastMod = format.format(hasIndex.lastModified());
+                    String mediaFiles = getImages(hasIndex) + "\n" + getVideos(hasIndex);
+                    System.out.println(lastMod + " | " + location);
+                    links.add(new Link(location, lastMod, mediaFiles));
                     find(new File (file.getAbsolutePath() + "/" + str), arg.getDomain());
                 }
             }
